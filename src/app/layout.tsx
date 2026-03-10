@@ -1,9 +1,22 @@
-import type {Metadata} from 'next';
+
+import type { Metadata } from 'next';
 import './globals.css';
+import { Playfair_Display, JetBrains_Mono } from 'next/font/google';
+
+const serif = Playfair_Display({
+  subsets: ['latin'],
+  style: ['italic'],
+  variable: '--font-serif',
+});
+
+const mono = JetBrains_Mono({
+  subsets: ['latin'],
+  variable: '--font-mono',
+});
 
 export const metadata: Metadata = {
-  title: 'MindFlow AI - Personalized Wellbeing & Journal',
-  description: 'AI-powered wellbeing companion for mood tracking, journaling, and personalized recommendations.',
+  title: 'MindFlow | Step Into Your Resonance',
+  description: 'A sanctuary for the human mind, sculpted by artificial intelligence.',
 };
 
 export default function RootLayout({
@@ -13,12 +26,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="dark">
-      <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
-      </head>
-      <body className="font-body antialiased bg-background text-foreground overflow-x-hidden">
+      <body className={`${serif.variable} ${mono.variable} font-mono antialiased bg-background text-foreground`}>
         {children}
       </body>
     </html>
