@@ -1,10 +1,9 @@
-
 "use client";
 
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Shield, ArrowRight, Loader2 } from 'lucide-react';
+import { ArrowRight, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { 
@@ -13,10 +12,9 @@ import {
   GoogleAuthProvider,
   createUserWithEmailAndPassword 
 } from 'firebase/auth';
-import { useAuth, useUser } from '@/firebase';
+import { useFirebase, useFirestore, useUser } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { doc, setDoc } from 'firebase/firestore';
-import { useFirestore } from '@/firebase';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');

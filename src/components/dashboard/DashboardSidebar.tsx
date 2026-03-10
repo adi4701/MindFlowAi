@@ -1,4 +1,3 @@
-
 "use client";
 
 import { 
@@ -14,7 +13,7 @@ import {
 import { MessageSquare, BookOpen, History, LogOut, User, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { useAuth, useUser } from '@/firebase';
+import { useFirebase, useUser } from '@/firebase';
 import { signOut } from 'firebase/auth';
 
 export function DashboardSidebar() {
