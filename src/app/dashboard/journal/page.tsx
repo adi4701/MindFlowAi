@@ -5,8 +5,10 @@ import { useState } from 'react';
 import { aiJournalReflection } from '@/ai/flows/ai-journal-reflection-flow';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Loader2, Save, Sparkles } from 'lucide-react';
+import { Loader2, Sparkles } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useUser, useFirestore, errorEmitter, FirestorePermissionError } from '@/firebase';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
 export default function JournalPage() {
   const [content, setContent] = useState('');
@@ -14,6 +16,8 @@ export default function JournalPage() {
   const [isReflecting, setIsReflecting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
+  const { user } = useUser();
+  const db = useFirestore();
 
   const handleReflect = async () => {
     if (!content.trim() || isReflecting) return;
@@ -34,16 +38,38 @@ export default function JournalPage() {
   };
 
   const handleSave = () => {
+    if (!user || !content.trim()) return;
     setIsSaving(true);
-    setTimeout(() => {
-      setIsSaving(false);
-      toast({
-        title: "Entry Archived",
-        description: "Securely stored in your archive."
+    
+    const journalRef = collection(db, 'users', user.uid, 'journal');
+    const data = {
+      userId: user.uid,
+      content,
+      reflection: reflection || "",
+      createdAt: serverTimestamp(),
+      tags: [],
+    };
+
+    addDoc(journalRef, data)
+      .then(() => {
+        toast({
+          title: "Entry Archived",
+          description: "Securely stored in your archive."
+        });
+        setContent('');
+        setReflection(null);
+      })
+      .catch(async (error) => {
+        const permissionError = new FirestorePermissionError({
+          path: journalRef.path,
+          operation: 'create',
+          requestResourceData: data,
+        });
+        errorEmitter.emit('permission-error', permissionError);
+      })
+      .finally(() => {
+        setIsSaving(false);
       });
-      setContent('');
-      setReflection(null);
-    }, 1500);
   };
 
   return (
@@ -83,7 +109,7 @@ export default function JournalPage() {
             <Button 
               onClick={handleSave} 
               disabled={!content.trim() || isSaving}
-              className="h-16 px-12 bg-white text-black hover:bg-white/90 rounded-none font-mono uppercase tracking-widest text-xs shadow-2xl"
+              className="h-16 px-12 bg-white text-black hover:bg-white/90 rounded-none font-mono uppercase tracking-widest text-xs shadow-2xl transition-all duration-700"
             >
               {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : "Commit to Memory"}
             </Button>

@@ -13,16 +13,30 @@ import {
 } from '@/components/ui/sidebar';
 import { MessageSquare, BookOpen, History, LogOut, User, Sparkles } from 'lucide-react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
+import { useAuth, useUser } from '@/firebase';
+import { signOut } from 'firebase/auth';
 
 export function DashboardSidebar() {
   const pathname = usePathname();
+  const router = useRouter();
+  const { auth } = useFirebase();
+  const { user } = useUser();
 
   const navItems = [
     { label: 'Atmosphere', icon: MessageSquare, href: '/dashboard' },
     { label: 'Journal', icon: BookOpen, href: '/dashboard/journal' },
     { label: 'Archive', icon: History, href: '/dashboard/history' },
   ];
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      router.push('/login');
+    } catch (error) {
+      console.error("Logout error", error);
+    }
+  };
 
   return (
     <Sidebar collapsible="icon" className="border-r border-white/5 bg-background">
@@ -61,7 +75,9 @@ export function DashboardSidebar() {
             <SidebarMenuItem>
               <SidebarMenuButton tooltip="Identity" className="h-12 text-white/20 hover:text-white transition-colors">
                 <User className="w-4 h-4" />
-                <span className="mono-label tracking-widest !text-inherit">Identity</span>
+                <span className="mono-label tracking-widest !text-inherit">
+                  {user?.displayName || user?.email?.split('@')[0] || "Identity"}
+                </span>
               </SidebarMenuButton>
             </SidebarMenuItem>
           </SidebarMenu>
@@ -71,7 +87,11 @@ export function DashboardSidebar() {
       <SidebarFooter className="p-8 border-t border-white/5">
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton tooltip="Terminate Session" className="text-white/20 hover:text-white transition-colors h-12">
+            <SidebarMenuButton 
+              tooltip="Terminate Session" 
+              onClick={handleLogout}
+              className="text-white/20 hover:text-white transition-colors h-12"
+            >
               <LogOut className="w-4 h-4" />
               <span className="mono-label tracking-widest !text-inherit">Terminate</span>
             </SidebarMenuButton>

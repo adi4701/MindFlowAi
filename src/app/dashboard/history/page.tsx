@@ -1,42 +1,41 @@
 
 "use client";
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Input } from '@/components/ui/input';
-import { Search, ChevronRight } from 'lucide-react';
+import { Search, ChevronRight, Loader2 } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
-
-const mockEntries = [
-  {
-    id: '1',
-    date: 'OCT 24, 2023',
-    preview: "Today was surprisingly calm. I spent some time walking through the park...",
-    mood: 'Peaceful',
-    reflection: 'Focus on small steps rather than the whole journey.'
-  },
-  {
-    id: '2',
-    date: 'OCT 23, 2023',
-    preview: "Feeling a bit overwhelmed with the new project at work. Too many moving pieces...",
-    mood: 'Anxious',
-    reflection: 'Break tasks into manageable chunks.'
-  },
-  {
-    id: '3',
-    date: 'OCT 20, 2023',
-    preview: "Great session at the gym today. Really pushed myself and reached a new personal best...",
-    mood: 'Energetic',
-    reflection: 'Physical strength leads to mental resilience.'
-  }
-];
+import { useUser, useFirestore, useCollection } from '@/firebase';
+import { collection, query, orderBy } from 'firebase/firestore';
 
 export default function HistoryPage() {
   const [search, setSearch] = useState('');
+  const { user } = useUser();
+  const db = useFirestore();
 
-  const filteredEntries = mockEntries.filter(entry => 
-    entry.preview.toLowerCase().includes(search.toLowerCase()) ||
-    entry.mood.toLowerCase().includes(search.toLowerCase())
-  );
+  const journalQuery = useMemo(() => {
+    if (!user || !db) return null;
+    return query(
+      collection(db, 'users', user.uid, 'journal'),
+      orderBy('createdAt', 'desc')
+    );
+  }, [user, db]);
+
+  const { data: entries, loading } = useCollection(journalQuery);
+
+  const filteredEntries = useMemo(() => {
+    if (!entries) return [];
+    return entries.filter(entry => 
+      entry.content.toLowerCase().includes(search.toLowerCase()) ||
+      (entry.reflection && entry.reflection.toLowerCase().includes(search.toLowerCase()))
+    );
+  }, [entries, search]);
+
+  const formatDate = (timestamp: any) => {
+    if (!timestamp) return '...';
+    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).toUpperCase();
+  };
 
   return (
     <div className="flex flex-col h-screen max-w-5xl mx-auto w-full p-8 md:p-16 space-y-16 overflow-hidden">
@@ -59,17 +58,21 @@ export default function HistoryPage() {
 
       <ScrollArea className="flex-1 -mx-4 px-4 custom-scrollbar">
         <div className="space-y-12 pb-24">
-          {filteredEntries.length > 0 ? (
-            filteredEntries.map((entry) => (
+          {loading ? (
+            <div className="py-24 flex flex-col items-center justify-center gap-4">
+              <Loader2 className="w-6 h-6 animate-spin text-white/20" />
+              <div className="mono-label">Syncing Archive...</div>
+            </div>
+          ) : filteredEntries.length > 0 ? (
+            filteredEntries.map((entry: any) => (
               <div key={entry.id} className="group cursor-pointer py-8 border-b border-white/5 hover:border-white/20 transition-all duration-700">
                 <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
                   <div className="space-y-4 flex-1">
                     <div className="flex items-center gap-6">
-                      <span className="mono-label !text-white/60">{entry.date}</span>
-                      <span className="mono-label text-white/20">— {entry.mood}</span>
+                      <span className="mono-label !text-white/60">{formatDate(entry.createdAt)}</span>
                     </div>
                     <p className="text-2xl text-white/40 group-hover:text-white font-serif italic transition-colors duration-700 line-clamp-2">
-                      {entry.preview}
+                      {entry.content}
                     </p>
                     {entry.reflection && (
                       <div className="mono-label text-[9px] !text-white/20 border-l border-white/10 pl-4 py-1 italic">

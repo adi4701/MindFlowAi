@@ -2,6 +2,8 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import { Playfair_Display, JetBrains_Mono } from 'next/font/google';
+import { FirebaseClientProvider } from '@/firebase';
+import { Toaster } from '@/components/ui/toaster';
 
 const serif = Playfair_Display({
   subsets: ['latin'],
@@ -27,7 +29,10 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <body className={`${serif.variable} ${mono.variable} font-mono antialiased bg-background text-foreground`}>
-        {children}
+        <FirebaseClientProvider>
+          {children}
+          <Toaster />
+        </FirebaseClientProvider>
       </body>
     </html>
   );
