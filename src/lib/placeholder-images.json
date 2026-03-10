@@ -1,3 +1,28 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "hero-bg",
+      "description": "Abstract tranquil waves",
+      "imageUrl": "https://picsum.photos/seed/mindflow-hero/1200/800",
+      "imageHint": "abstract tranquility"
+    },
+    {
+      "id": "feature-reflection",
+      "description": "Inner peaceful reflection",
+      "imageUrl": "https://picsum.photos/seed/reflect/600/400",
+      "imageHint": "peaceful meditation"
+    },
+    {
+      "id": "feature-music",
+      "description": "Music and flow",
+      "imageUrl": "https://picsum.photos/seed/music/600/400",
+      "imageHint": "musical harmony"
+    },
+    {
+      "id": "feature-privacy",
+      "description": "Secure digital lock",
+      "imageUrl": "https://picsum.photos/seed/privacy/600/400",
+      "imageHint": "digital security"
+    }
+  ]
 }
