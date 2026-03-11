@@ -37,6 +37,8 @@ export function DashboardSidebar() {
     }
   };
 
+  const displayUsername = user?.email ? user.email.split('@')[0] : "Identity";
+
   return (
     <Sidebar collapsible="icon" className="border-r border-white/5 bg-background">
       <SidebarHeader className="p-8">
@@ -75,7 +77,7 @@ export function DashboardSidebar() {
               <SidebarMenuButton tooltip="Identity" className="h-12 text-white/20 hover:text-white transition-colors">
                 <User className="w-4 h-4" />
                 <span className="mono-label tracking-widest !text-inherit">
-                  {user?.displayName || user?.email?.split('@')[0] || "Identity"}
+                  {displayUsername}
                 </span>
               </SidebarMenuButton>
             </SidebarMenuItem>

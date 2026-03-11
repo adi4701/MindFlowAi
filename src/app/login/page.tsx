@@ -15,7 +15,7 @@ import { useToast } from '@/hooks/use-toast';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [isRegistering, setIsRegistering] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -32,13 +32,13 @@ export default function LoginPage() {
     }
   }, [user, router]);
 
-  const syncUserProfile = async (userId: string, userEmail: string) => {
+  const syncUserProfile = async (userId: string, userUsername: string) => {
     try {
       const userRef = doc(db, 'users', userId);
       await setDoc(userRef, {
         uid: userId,
-        email: userEmail,
-        displayName: userEmail.split('@')[0],
+        username: userUsername,
+        displayName: userUsername,
         createdAt: serverTimestamp(),
       }, { merge: true });
     } catch (e) {
@@ -48,33 +48,30 @@ export default function LoginPage() {
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email || !password || isLoading) return;
+    if (!username || !password || isLoading) return;
     
-    // Safety check for uninitialized Firebase
-    if (!auth || typeof auth.signInWithEmailAndPassword === 'undefined' && !signInWithEmailAndPassword) {
-        toast({ 
-            variant: "destructive", 
-            title: "Link Offline", 
-            description: "The authentication service is not yet initialized. Please wait a moment." 
-        });
-        return;
-    }
+    // Firebase requires an email format, so we map the username to an internal domain.
+    const internalEmail = `${username.toLowerCase().trim()}@mindflow.ai`;
 
     setIsLoading(true);
     try {
       if (isRegistering) {
-        const cred = await createUserWithEmailAndPassword(auth, email, password);
-        await syncUserProfile(cred.user.uid, email);
+        const cred = await createUserWithEmailAndPassword(auth, internalEmail, password);
+        await syncUserProfile(cred.user.uid, username);
         toast({ title: "Sanctuary Initialized", description: "Your digital space is ready." });
       } else {
-        await signInWithEmailAndPassword(auth, email, password);
+        await signInWithEmailAndPassword(auth, internalEmail, password);
         toast({ title: "Link Restored", description: "Welcome back to the silence." });
       }
     } catch (error: any) {
+      let message = error.message.replace('Firebase: ', '');
+      if (message.includes('auth/user-not-found') || message.includes('auth/wrong-password') || message.includes('auth/invalid-credential')) {
+        message = "Identity not recognized or secret is incorrect.";
+      }
       toast({ 
         variant: "destructive", 
         title: "Authentication Failed", 
-        description: error.message.replace('Firebase: ', '') 
+        description: message
       });
     } finally {
       setIsLoading(false);
@@ -103,12 +100,12 @@ export default function LoginPage() {
         <form onSubmit={handleAuth} className="space-y-8">
           <div className="space-y-4">
             <div className="space-y-2">
-              <label className="mono-label block ml-1">Email</label>
+              <label className="mono-label block ml-1">Username</label>
               <Input 
-                type="email" 
-                placeholder="identity@resonance.io" 
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                type="text" 
+                placeholder="choose_identity" 
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
                 required
                 className="h-14 bg-white/[0.02] border-white/5 text-white rounded-none focus-visible:ring-white/10 placeholder:text-white/5 font-mono text-xs"
               />
