@@ -8,8 +8,6 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { 
   signInWithEmailAndPassword, 
-  signInWithPopup, 
-  GoogleAuthProvider,
   createUserWithEmailAndPassword 
 } from 'firebase/auth';
 import { useAuth, useFirestore, useUser } from '@/firebase';
@@ -34,17 +32,17 @@ export default function LoginPage() {
     }
   }, [user, router]);
 
-  const syncUserProfile = async (userId: string, userEmail: string, displayName?: string) => {
+  const syncUserProfile = async (userId: string, userEmail: string) => {
     try {
       const userRef = doc(db, 'users', userId);
       await setDoc(userRef, {
         uid: userId,
         email: userEmail,
-        displayName: displayName || userEmail.split('@')[0],
+        displayName: userEmail.split('@')[0],
         createdAt: serverTimestamp(),
       }, { merge: true });
     } catch (e) {
-      console.warn("Profile sync non-critical failure:", e);
+      console.warn("Profile synchronization failed:", e);
     }
   };
 
@@ -52,6 +50,16 @@ export default function LoginPage() {
     e.preventDefault();
     if (!email || !password || isLoading) return;
     
+    // Safety check for uninitialized Firebase
+    if (!auth || typeof auth.signInWithEmailAndPassword === 'undefined' && !signInWithEmailAndPassword) {
+        toast({ 
+            variant: "destructive", 
+            title: "Link Offline", 
+            description: "The authentication service is not yet initialized. Please wait a moment." 
+        });
+        return;
+    }
+
     setIsLoading(true);
     try {
       if (isRegistering) {
@@ -60,30 +68,13 @@ export default function LoginPage() {
         toast({ title: "Sanctuary Initialized", description: "Your digital space is ready." });
       } else {
         await signInWithEmailAndPassword(auth, email, password);
+        toast({ title: "Link Restored", description: "Welcome back to the silence." });
       }
     } catch (error: any) {
       toast({ 
         variant: "destructive", 
-        title: "Link Interrupted", 
+        title: "Authentication Failed", 
         description: error.message.replace('Firebase: ', '') 
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleGoogleAuth = async () => {
-    if (isLoading) return;
-    setIsLoading(true);
-    try {
-      const provider = new GoogleAuthProvider();
-      const cred = await signInWithPopup(auth, provider);
-      await syncUserProfile(cred.user.uid, cred.user.email!, cred.user.displayName || undefined);
-    } catch (error: any) {
-      toast({ 
-        variant: "destructive", 
-        title: "Google Link Failed", 
-        description: error.message.replace('Firebase: ', '')
       });
     } finally {
       setIsLoading(false);
@@ -144,7 +135,7 @@ export default function LoginPage() {
             {!isLoading && <ArrowRight className="ml-2 w-3 h-3" />}
           </Button>
 
-          <div className="space-y-4">
+          <div className="pt-4">
             <button 
               type="button"
               onClick={() => setIsRegistering(!isRegistering)}
@@ -152,25 +143,6 @@ export default function LoginPage() {
             >
               {isRegistering ? "already registered? login" : "need access? register"}
             </button>
-
-            <div className="relative py-4">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t border-white/5"></span>
-              </div>
-              <div className="relative flex justify-center">
-                <span className="bg-background px-4 mono-label">or</span>
-              </div>
-            </div>
-
-            <Button 
-              type="button"
-              variant="outline" 
-              onClick={handleGoogleAuth}
-              disabled={isLoading}
-              className="w-full h-14 border-white/5 bg-transparent hover:bg-white/5 text-white/40 hover:text-white rounded-none font-mono uppercase tracking-widest text-[9px] transition-all duration-500"
-            >
-              Continue with Google
-            </Button>
           </div>
         </form>
 
