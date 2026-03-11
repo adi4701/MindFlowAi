@@ -33,6 +33,7 @@ export default function LoginPage() {
   }, [user, router]);
 
   const syncUserProfile = async (userId: string, userUsername: string) => {
+    if (!db) return;
     try {
       const userRef = doc(db, 'users', userId);
       await setDoc(userRef, {
@@ -48,7 +49,7 @@ export default function LoginPage() {
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!username || !password || isLoading) return;
+    if (!username || !password || isLoading || !auth) return;
     
     // Firebase requires an email format, so we map the username to an internal domain.
     const internalEmail = `${username.toLowerCase().trim()}@mindflow.ai`;
@@ -77,6 +78,16 @@ export default function LoginPage() {
       setIsLoading(false);
     }
   };
+
+  if (!auth) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6 text-center space-y-6">
+        <h2 className="text-2xl font-serif italic text-white">System Offline</h2>
+        <p className="mono-label">The neural link configuration is missing.</p>
+        <Link href="/" className="mono-label hover:text-white transition-colors">← Return to menu</Link>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-6 relative">

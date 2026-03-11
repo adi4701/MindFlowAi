@@ -12,8 +12,8 @@ let auth: Auth;
 export function initializeFirebase() {
   if (!isConfigValid) {
     console.warn("Firebase configuration is missing or invalid. Please check your environment variables.");
-    // Return dummy objects to prevent immediate crashes during SSR/initialization
-    return { app: {} as any, db: {} as any, auth: {} as any };
+    // Return nulls to allow hooks to bail out gracefully
+    return { app: null as any, db: null as any, auth: null as any };
   }
 
   if (!getApps().length) {

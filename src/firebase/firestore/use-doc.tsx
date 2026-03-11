@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -23,11 +22,17 @@ export function useDoc<T = DocumentData>(ref: DocumentReference<T> | null) {
       return;
     }
 
+    // Ensure the reference is valid and associated with a Firestore instance
+    if (!(ref as any).firestore) {
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     const unsubscribe = onSnapshot(
       ref,
       (snapshot: DocumentSnapshot<T>) => {
-        setData(snapshot.exists() ? { ...snapshot.data(), id: snapshot.id } : null);
+        setData(snapshot.exists() ? { ...snapshot.data(), id: snapshot.id } as T : null);
         setLoading(false);
       },
       async (err) => {
