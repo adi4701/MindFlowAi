@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ArrowRight, Loader2, Sparkles } from 'lucide-react';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { 
   signInWithEmailAndPassword, 
@@ -22,52 +21,55 @@ export default function LoginPage() {
   
   const auth = useAuth();
   const db = useFirestore();
-  const { user } = useUser();
+  const { user, loading: userLoading } = useUser();
   const router = useRouter();
   const { toast } = useToast();
 
   useEffect(() => {
-    if (user) {
+    if (user && !userLoading) {
       router.push('/dashboard');
     }
-  }, [user, router]);
-
-  const syncUserProfile = async (userId: string, userUsername: string) => {
-    if (!db) return;
-    try {
-      const userRef = doc(db, 'users', userId);
-      await setDoc(userRef, {
-        uid: userId,
-        username: userUsername,
-        displayName: userUsername,
-        createdAt: serverTimestamp(),
-      }, { merge: true });
-    } catch (e) {
-      console.warn("Profile synchronization failed:", e);
-    }
-  };
+  }, [user, userLoading, router]);
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!username || !password || isLoading || !auth) return;
+    if (!username || !password || isLoading || !auth) {
+      if (!auth) {
+        toast({ 
+          variant: "destructive", 
+          title: "System Offline", 
+          description: "Firebase is not properly configured." 
+        });
+      }
+      return;
+    }
     
-    // Firebase requires an email format, so we map the username to an internal domain.
-    const internalEmail = `${username.toLowerCase().trim()}@mindflow.ai`;
+    // Map username to an internal email format for Firebase Auth
+    const internalEmail = `${username.toLowerCase().trim().replace(/[^a-z0-9]/g, '')}@mindflow.ai`;
 
     setIsLoading(true);
     try {
       if (isRegistering) {
         const cred = await createUserWithEmailAndPassword(auth, internalEmail, password);
-        await syncUserProfile(cred.user.uid, username);
-        toast({ title: "Sanctuary Initialized", description: "Your digital space is ready." });
+        if (db) {
+          await setDoc(doc(db, 'users', cred.user.uid), {
+            uid: cred.user.uid,
+            username: username,
+            displayName: username,
+            createdAt: serverTimestamp(),
+          }, { merge: true });
+        }
+        toast({ title: "Neural Link Established", description: "Identity registry complete." });
       } else {
         await signInWithEmailAndPassword(auth, internalEmail, password);
-        toast({ title: "Link Restored", description: "Welcome back to the silence." });
+        toast({ title: "Welcome Back", description: "Resuming neural session." });
       }
     } catch (error: any) {
-      let message = error.message.replace('Firebase: ', '');
-      if (message.includes('auth/user-not-found') || message.includes('auth/wrong-password') || message.includes('auth/invalid-credential')) {
-        message = "Identity not recognized or secret is incorrect.";
+      let message = "Could not authenticate signature.";
+      if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+        message = "Identity or secret does not match.";
+      } else if (error.code === 'auth/email-already-in-use') {
+        message = "This identity is already taken.";
       }
       toast({ 
         variant: "destructive", 
@@ -78,16 +80,6 @@ export default function LoginPage() {
       setIsLoading(false);
     }
   };
-
-  if (!auth) {
-    return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6 text-center space-y-6">
-        <h2 className="text-2xl font-serif italic text-white">System Offline</h2>
-        <p className="mono-label">The neural link configuration is missing.</p>
-        <Link href="/" className="mono-label hover:text-white transition-colors">← Return to menu</Link>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-6 relative">
@@ -101,35 +93,35 @@ export default function LoginPage() {
             <Sparkles className="w-6 h-6 text-white/20" />
           </div>
           <h2 className="text-4xl text-white font-serif italic">
-            {isRegistering ? "Begin Resonance." : "Resume Session."}
+            {isRegistering ? "Register Identity." : "Authenticate."}
           </h2>
-          <p className="text-white/30 font-mono text-[10px] uppercase tracking-widest">
-            {isRegistering ? "Create your neural signature." : "Authenticate to continue."}
+          <p className="mono-label !text-white/20">
+            Username and Secret required.
           </p>
         </header>
 
         <form onSubmit={handleAuth} className="space-y-8">
           <div className="space-y-4">
             <div className="space-y-2">
-              <label className="mono-label block ml-1">Username</label>
+              <label className="mono-label block ml-1 text-white/40">Username</label>
               <Input 
                 type="text" 
-                placeholder="choose_identity" 
+                placeholder="identity_token" 
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 required
-                className="h-14 bg-white/[0.02] border-white/5 text-white rounded-none focus-visible:ring-white/10 placeholder:text-white/5 font-mono text-xs"
+                className="h-14 bg-white/[0.02] border-white/10 text-white rounded-none focus-visible:ring-white/10 font-mono text-xs tracking-widest"
               />
             </div>
             <div className="space-y-2">
-              <label className="mono-label block ml-1">Secret</label>
+              <label className="mono-label block ml-1 text-white/40">Secret</label>
               <Input 
                 type="password" 
                 placeholder="••••••••" 
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="h-14 bg-white/[0.02] border-white/5 text-white rounded-none focus-visible:ring-white/10 placeholder:text-white/5 font-mono text-xs"
+                className="h-14 bg-white/[0.02] border-white/10 text-white rounded-none focus-visible:ring-white/10 font-mono text-xs tracking-widest"
               />
             </div>
           </div>
@@ -139,26 +131,20 @@ export default function LoginPage() {
             disabled={isLoading}
             className="w-full h-16 bg-white text-black hover:bg-white/90 rounded-none font-mono uppercase tracking-[0.3em] text-[10px] transition-all duration-700 shadow-2xl"
           >
-            {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : (isRegistering ? "Create Link" : "Authenticate")} 
+            {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : (isRegistering ? "Create Profile" : "Login")} 
             {!isLoading && <ArrowRight className="ml-2 w-3 h-3" />}
           </Button>
 
-          <div className="pt-4">
+          <div className="pt-4 flex justify-center">
             <button 
               type="button"
               onClick={() => setIsRegistering(!isRegistering)}
-              className="w-full text-center mono-label !text-white/20 hover:!text-white transition-colors py-2 lowercase"
+              className="mono-label !text-white/20 hover:!text-white transition-colors py-2 lowercase"
             >
-              {isRegistering ? "already registered? login" : "need access? register"}
+              {isRegistering ? "existing identity? authenticate" : "no identity? register new"}
             </button>
           </div>
         </form>
-
-        <footer className="pt-12 text-center">
-          <Link href="/" className="mono-label !text-white/10 hover:!text-white transition-colors lowercase">
-            ← Return to silence
-          </Link>
-        </footer>
       </div>
     </div>
   );

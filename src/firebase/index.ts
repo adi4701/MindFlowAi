@@ -5,15 +5,14 @@ import { getFirestore, Firestore } from 'firebase/firestore';
 import { getAuth, Auth } from 'firebase/auth';
 import { firebaseConfig, isConfigValid } from './config';
 
-let app: FirebaseApp;
-let db: Firestore;
-let auth: Auth;
+let app: FirebaseApp | null = null;
+let db: Firestore | null = null;
+let auth: Auth | null = null;
 
 export function initializeFirebase() {
   if (!isConfigValid) {
-    console.warn("Firebase configuration is missing or invalid. Please check your environment variables.");
-    // Return nulls to allow hooks to bail out gracefully
-    return { app: null as any, db: null as any, auth: null as any };
+    console.warn("Firebase configuration is missing or invalid.");
+    return { app: null, db: null, auth: null };
   }
 
   if (!getApps().length) {

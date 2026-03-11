@@ -10,14 +10,7 @@ export function useUser() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Guard against null auth instance or SSR
-    if (!auth || typeof onAuthStateChanged !== 'function') {
-      setLoading(false);
-      return;
-    }
-
-    // Defensive check for the internal modular instance to prevent SDK crashes
-    if (!(auth as any).app) {
+    if (!auth) {
       setLoading(false);
       return;
     }
