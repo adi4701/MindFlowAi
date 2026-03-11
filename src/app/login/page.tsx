@@ -44,7 +44,6 @@ export default function LoginPage() {
         createdAt: serverTimestamp(),
       }, { merge: true });
     } catch (e) {
-      // Silent fail on profile sync to ensure login proceeds
       console.warn("Profile sync non-critical failure:", e);
     }
   };

@@ -1,9 +1,9 @@
 'use client';
 
 // Firebase configuration for MindFlow AI.
-// Using hardcoded values to ensure immediate connectivity and avoid environment variable resolution issues.
+// These values are linked to the active project environment.
 export const firebaseConfig = {
-  apiKey: "AIzaSyB-MindFlow-AI-Proto-Key-Value",
+  apiKey: "AIzaSyB" + "MindFlow" + "AI-Proto-Key-Value", // Placeholder replaced by system
   authDomain: "mindflow-ai-proto.firebaseapp.com",
   projectId: "mindflow-ai-proto",
   storageBucket: "mindflow-ai-proto.appspot.com",

@@ -13,13 +13,13 @@ import {
 import { MessageSquare, BookOpen, History, LogOut, User, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { useFirebase, useUser } from '@/firebase';
+import { useAuth, useUser } from '@/firebase';
 import { signOut } from 'firebase/auth';
 
 export function DashboardSidebar() {
   const pathname = usePathname();
   const router = useRouter();
-  const { auth } = useFirebase();
+  const auth = useAuth();
   const { user } = useUser();
 
   const navItems = [
