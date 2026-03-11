@@ -19,6 +19,9 @@ export function useUser() {
       const unsubscribe = onAuthStateChanged(auth, (user) => {
         setUser(user);
         setLoading(false);
+      }, (err) => {
+        console.error("Auth state change error:", err);
+        setLoading(false);
       });
       return () => unsubscribe();
     } catch (err) {

@@ -11,20 +11,25 @@ let auth: Auth | null = null;
 
 export function initializeFirebase() {
   if (!isConfigValid) {
-    console.warn("Firebase configuration is missing or invalid.");
+    console.warn("Firebase configuration is missing or invalid. Check your environment variables.");
     return { app: null, db: null, auth: null };
   }
 
-  if (!getApps().length) {
-    app = initializeApp(firebaseConfig);
-  } else {
-    app = getApp();
+  try {
+    if (!getApps().length) {
+      app = initializeApp(firebaseConfig);
+    } else {
+      app = getApp();
+    }
+    
+    db = getFirestore(app);
+    auth = getAuth(app);
+    
+    return { app, db, auth };
+  } catch (error) {
+    console.error("Firebase initialization failed:", error);
+    return { app: null, db: null, auth: null };
   }
-  
-  db = getFirestore(app);
-  auth = getAuth(app);
-  
-  return { app, db, auth };
 }
 
 export * from './provider';

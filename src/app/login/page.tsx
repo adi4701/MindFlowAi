@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ArrowRight, Loader2, Sparkles } from 'lucide-react';
+import { ArrowRight, Loader2, Sparkles, AlertCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { 
   signInWithEmailAndPassword, 
@@ -12,6 +12,7 @@ import {
 import { useAuth, useFirestore, useUser } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 export default function LoginPage() {
   const [username, setUsername] = useState('');
@@ -38,7 +39,7 @@ export default function LoginPage() {
         toast({ 
           variant: "destructive", 
           title: "System Offline", 
-          description: "Firebase is not properly configured." 
+          description: "Neural link parameters are not configured. Please check environment configuration." 
         });
       }
       return;
@@ -100,6 +101,16 @@ export default function LoginPage() {
           </p>
         </header>
 
+        {!auth && !userLoading && (
+          <Alert variant="destructive" className="bg-red-950/20 border-red-900/50 text-red-200">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Hardware Disconnected</AlertTitle>
+            <AlertDescription className="text-xs">
+              The neural link is missing configuration keys. Authentication services are currently inactive.
+            </AlertDescription>
+          </Alert>
+        )}
+
         <form onSubmit={handleAuth} className="space-y-8">
           <div className="space-y-4">
             <div className="space-y-2">
@@ -110,7 +121,8 @@ export default function LoginPage() {
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 required
-                className="h-14 bg-white/[0.02] border-white/10 text-white rounded-none focus-visible:ring-white/10 font-mono text-xs tracking-widest"
+                disabled={!auth}
+                className="h-14 bg-white/[0.02] border-white/10 text-white rounded-none focus-visible:ring-white/10 font-mono text-xs tracking-widest disabled:opacity-30"
               />
             </div>
             <div className="space-y-2">
@@ -121,14 +133,15 @@ export default function LoginPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="h-14 bg-white/[0.02] border-white/10 text-white rounded-none focus-visible:ring-white/10 font-mono text-xs tracking-widest"
+                disabled={!auth}
+                className="h-14 bg-white/[0.02] border-white/10 text-white rounded-none focus-visible:ring-white/10 font-mono text-xs tracking-widest disabled:opacity-30"
               />
             </div>
           </div>
 
           <Button 
             type="submit" 
-            disabled={isLoading}
+            disabled={isLoading || !auth}
             className="w-full h-16 bg-white text-black hover:bg-white/90 rounded-none font-mono uppercase tracking-[0.3em] text-[10px] transition-all duration-700 shadow-2xl"
           >
             {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : (isRegistering ? "Create Profile" : "Login")} 
@@ -138,8 +151,9 @@ export default function LoginPage() {
           <div className="pt-4 flex justify-center">
             <button 
               type="button"
+              disabled={!auth}
               onClick={() => setIsRegistering(!isRegistering)}
-              className="mono-label !text-white/20 hover:!text-white transition-colors py-2 lowercase"
+              className="mono-label !text-white/20 hover:!text-white transition-colors py-2 lowercase disabled:pointer-events-none"
             >
               {isRegistering ? "existing identity? authenticate" : "no identity? register new"}
             </button>
